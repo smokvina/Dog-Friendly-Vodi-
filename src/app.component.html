@@ -1,0 +1,177 @@
+<div class="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans">
+  <main class="container mx-auto p-4 md:p-8">
+    <header class="text-center mb-8">
+      <div class="flex justify-center items-center gap-4 mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-indigo-500" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm3.333 9.333c-.736 0-1.333.597-1.333 1.334 0 .736.597 1.333 1.333 1.333.737 0 1.334-.597 1.334-1.333 0-.737-.597-1.334-1.334-1.334zm-6.666 0c-.737 0-1.334.597-1.334 1.334 0 .736.597 1.333 1.334 1.333.736 0 1.333-.597 1.333-1.333 0-.737-.597-1.334-1.333-1.334zm-2.093 5.093c.125.26.42.42.72.42h9.34c.3 0 .594-.16.72-.42.203-.418.034-.92-.38-1.121-1.488-.72-3.32-1.139-5.2-1.139s-3.712.418-5.2 1.139c-.414.2-.583.703-.38 1.121z"/>
+        </svg>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          Dog-Friendly Vodič
+        </h1>
+      </div>
+      <p class="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+        Unesite lokaciju i otkrijte najbolja mjesta za vas i vašeg psa, od parkova do skrivenih lokalnih tajni.
+      </p>
+    </header>
+
+    <div class="max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 mb-8">
+      <form (ngSubmit)="searchLocation()">
+        <label for="location-input" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          Unesite grad ili lokaciju
+        </label>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input 
+            id="location-input"
+            type="text" 
+            [(ngModel)]="location"
+            name="location"
+            placeholder="Npr. Split, Hrvatska"
+            class="flex-grow w-full px-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-150 ease-in-out"
+          />
+          <button 
+            type="submit" 
+            [disabled]="loading()"
+            class="inline-flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed transition duration-150 ease-in-out dark:focus:ring-offset-slate-900"
+          >
+            @if (loading()) {
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Analiziram...</span>
+            } @else {
+              <span>Istraži</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    @if (error()) {
+      <div class="max-w-2xl mx-auto bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+        <strong class="font-bold">Greška!</strong>
+        <span class="block sm:inline">{{ error() }}</span>
+      </div>
+    }
+
+    @if (loading() && !results()) {
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        @for (item of [1, 2, 3, 4]; track item) {
+          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 animate-pulse">
+            <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-4"></div>
+            <div class="space-y-3">
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-5/6"></div>
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (results(); as res) {
+      <div class="space-y-12">
+        <!-- Interaktivna Karta -->
+        <div #mapContainer class="w-full h-96 md:h-[500px] bg-slate-200 dark:bg-slate-800 rounded-lg shadow-lg z-10"></div>
+
+        <!-- Parkovi i Šetnice -->
+        <div>
+          <h2 class="text-3xl font-bold mb-4 text-slate-800 dark:text-slate-100 border-b-2 border-indigo-500 pb-2">Parkovi i Šetnice</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @for (park of res.parkovi_i_setnice; track park.naziv) {
+              <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-105 duration-300">
+                <div class="p-6">
+                  <div class="flex justify-between items-start">
+                    <h3 class="text-xl font-semibold text-slate-900 dark:text-white">{{ park.naziv }}</h3>
+                    @if (park.tip === 'lokalna_tajna') {
+                      <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                        <svg class="-ml-1 mr-1.5 h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        Lokalna Tajna
+                      </span>
+                    }
+                  </div>
+                  <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ park.adresa }}</p>
+                  <p class="mt-4 text-slate-600 dark:text-slate-300">{{ park.opis }}</p>
+                </div>
+              </div>
+            } @empty {
+              <p class="text-slate-500 dark:text-slate-400 md:col-span-2">Nema dostupnih podataka o parkovima i šetnicama.</p>
+            }
+          </div>
+        </div>
+
+        <!-- Pet Shopovi i Veterinari -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div>
+            <h2 class="text-3xl font-bold mb-4 text-slate-800 dark:text-slate-100 border-b-2 border-indigo-500 pb-2">Pet Shopovi</h2>
+            <div class="space-y-6">
+              @for (shop of res.pet_shopovi; track shop.naziv) {
+                <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+                  <h3 class="font-semibold text-lg text-slate-900 dark:text-white">{{ shop.naziv }}</h3>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">{{ shop.adresa }}</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-300 mt-2"><strong>Radno vrijeme:</strong> {{ shop.radno_vrijeme }}</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-300"><strong>Specijalizacija:</strong> {{ shop.specijalizacija }}</p>
+                </div>
+              } @empty {
+                <p class="text-slate-500 dark:text-slate-400">Nema dostupnih podataka o pet shopovima.</p>
+              }
+            </div>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold mb-4 text-slate-800 dark:text-slate-100 border-b-2 border-indigo-500 pb-2">Veterinari</h2>
+            <div class="space-y-6">
+              @for (vet of res.veterinari; track vet.naziv) {
+                <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+                  <h3 class="font-semibold text-lg text-slate-900 dark:text-white">{{ vet.naziv }}</h3>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">{{ vet.adresa }}</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-300 mt-2"><strong>Telefon:</strong> {{ vet.telefon }}</p>
+                  @if (vet.hitna_sluzba) {
+                    <p class="text-sm font-semibold text-red-600 dark:text-red-400">Dostupna hitna služba</p>
+                  }
+                </div>
+              } @empty {
+                 <p class="text-slate-500 dark:text-slate-400">Nema dostupnih podataka o veterinarima.</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Lokalne Smjernice -->
+        <div>
+          <h2 class="text-3xl font-bold mb-4 text-slate-800 dark:text-slate-100 border-b-2 border-indigo-500 pb-2">Lokalne Smjernice</h2>
+          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <ul class="space-y-3 list-disc list-inside text-slate-600 dark:text-slate-300">
+              @for (guideline of res.lokalne_smjernice; track guideline) {
+                <li>{{ guideline }}</li>
+              } @empty {
+                <p class="text-slate-500 dark:text-slate-400">Nema dostupnih podataka o lokalnim smjernicama.</p>
+              }
+            </ul>
+          </div>
+        </div>
+
+        <!-- Izvori podataka -->
+        @if (sources().length > 0) {
+          <div>
+            <h2 class="text-3xl font-bold mb-4 text-slate-800 dark:text-slate-100 border-b-2 border-indigo-500 pb-2">Izvori podataka</h2>
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+              <ul class="space-y-2 list-disc list-inside text-slate-600 dark:text-slate-300">
+                @for (source of sources(); track source.web.uri) {
+                  <li>
+                    <a [href]="source.web.uri" target="_blank" rel="noopener noreferrer" class="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-500 underline transition-colors duration-200">
+                      {{ source.web.title || source.web.uri }}
+                    </a>
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+
+  <footer class="text-center p-4 mt-8">
+    <p class="text-sm text-slate-500 dark:text-slate-400">Pokreće Gemini API</p>
+  </footer>
+</div>
